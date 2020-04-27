@@ -15,8 +15,4 @@ with open(links) as file:
 
     for idx, row in enumerate(reader):
         print('%i: [%s] Downloading %s' % (idx + 1, row[0], row[1]))
-        axel(
-            row[2],
-            output_path='Books/[%s] %s.pdf' % (row[0], row[1]),
-            num_connections=32,
-        )
+        os.system('wget %s -O "Books/[%s] %s.pdf"' % (row[2], row[0], row[1]))
