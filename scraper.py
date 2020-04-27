@@ -1,12 +1,7 @@
-import pandas as pd
 import lxml.html
 import os, sys
 import requests
-
-
-xlsx = 'Free+English+textbooks.xlsx'
-xfile = pd.ExcelFile(xlsx)
-df = xfile.parse()
+from csv import DictReader
 
 
 if not os.path.exists('Books'):
@@ -17,8 +12,6 @@ elif not os.path.isdir('Books'):
 
 
 class Book:
-
-
     def __init__(self, idx, title, edition, subject, url):
         self.idx     = idx
         self.title   = title
@@ -28,13 +21,10 @@ class Book:
         self.url     = url
         self.epub    = None
 
-
     def __repr__(self):
         return f'{self.idx}: {self.title}, {self.edition} [{self.subject}]'
 
-
     def process(self, subject):
-
         subject = subject.split(';')[0]
 
         try:
@@ -47,42 +37,34 @@ class Book:
 
         return subject
 
-
     def scrape(self):
-
         if os.path.exists(self.path) and os.path.exists(self.epat):
             print(f'Info: {self.path} already saved.')
             print(f'Info: {self.epat} already saved.')
             self.save = lambda: 0
+
             return 0
 
         response = requests.get(self.url)
         html  = lxml.html.fromstring(response.content)
         epub  = None
+
         try:
-            xpath = html.xpath(
-                '//*[@id="main-content"]/article[1]/div/div/div[2]/div/div/a'
-                )
+            xpath = html.xpath('//*[@id="main-content"]/article[1]/div/div/div[2]/div/div/a')
+
             if not bool(xpath):
-                xpath = html.xpath(
-                    '//*[@id="main-content"]/article[1]/div/div/div[2]/div[1]/a'
-                    )
-                epub  = html.xpath(
-                    '//*[@id="main-content"]/article[1]/div/div/div[2]/div[2]/a'
-                    )
+                xpath = html.xpath('//*[@id="main-content"]/article[1]/div/div/div[2]/div[1]/a')
+                epub  = html.xpath('//*[@id="main-content"]/article[1]/div/div/div[2]/div[2]/a')
                 epub = epub[0]
 
             xpath = xpath[0]
-
         except IndexError:
-            print(
-                f'Error: {self.idx} {self.name} server access point missing'
-                 )
+            print(f'Error: {self.idx} {self.name} server access point missing')
+
             self.save = lambda: 0
             return False
 
         else:
-
             stub  = xpath.get('href')
             pdf   = f'https://link.springer.com/{stub}'
             self.pdf  = requests.get(pdf).content
@@ -94,8 +76,6 @@ class Book:
 
 
     def save(self):
-
-
         if self.pdf and not os.path.exists(self.path):
             with open(self.path, 'wb') as fhand:
                 fhand.write(self.pdf)
@@ -104,7 +84,6 @@ class Book:
             print(f'Info: Springer does not furnish this as pdf.')
         else:
             print(f'Info: {self.path} already saved.')
-
 
         if self.epub and not os.path.exists(self.epat):
             with open(self.epat, 'wb') as fhand:
@@ -116,14 +95,21 @@ class Book:
             print(f'Info: {self.epat} already saved.')
 
 
+source = 'source.csv'
 
-for idx, row in df.iterrows():
-    book = Book(idx, 
-                df['Book Title'].iloc[idx], 
-                df['Edition'].iloc[idx], 
-                df['Subject Classification'].iloc[idx],
-                df['OpenURL'].iloc[idx])
-    print('\n', book)
-    book.scrape()
-    book.save()
-    print('\n')
+with open(source, mode='r') as file:
+    reader = DictReader(file)
+
+    for idx, row in enumerate(reader):
+        book = Book(**{
+            'idx': idx,
+            'title': row['Book Title'],
+            'edition': row['Edition'],
+            'subject': row['Subject Classification'],
+            'url': row['OpenURL'],
+        })
+
+        print('\n', book)
+        book.scrape()
+        book.save()
+        print('\n')
