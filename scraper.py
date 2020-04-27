@@ -1,7 +1,7 @@
 import lxml.html
 import os, sys
 import requests
-from csv import DictReader
+from csv import DictReader, writer, QUOTE_MINIMAL
 
 
 if not os.path.exists('Books'):
@@ -82,17 +82,15 @@ class Book:
 
 
     def writeToFile(self):
-        # PDF
-        if self.pdf:
-            with open('download-pdf.txt', 'a') as writer:
-                writer.write(str(self.pdf) +'\n')
-                writer.close()
+        with open('downloads.csv', 'a') as file:
+            w = writer(file, delimiter=',', quotechar='"', quoting=QUOTE_MINIMAL)
 
-        # EPUB
-        if self.epub:
-            with open('download-csv.txt', 'a') as writer:
-                writer.write(str(self.epub) + '\n')
-                writer.close()
+            w.writerow([
+                self.subject,
+                self.title,
+                str(self.pdf),
+                str(self.epub),
+            ])
 
 
     def save(self):
