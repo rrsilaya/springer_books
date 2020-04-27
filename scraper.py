@@ -68,12 +68,31 @@ class Book:
             stub = xpath.get('href')
             pdf = 'https://link.springer.com/%s' % stub
 
-            self.pdf  = requests.get(pdf).content
+            # self.pdf  = requests.get(pdf).content
+            self.pdf = pdf
 
             if epub:
                 stub = epub.get('href')
                 epub = 'https://link.springer.com/%s' % stub
-                self.epub = requests.get(epub).content
+                # self.epub = requests.get(epub).content
+                self.epub = epub
+
+            print('PDF: %s' % self.pdf)
+            print('EPUB: %s' % self.epub)
+
+
+    def writeToFile(self):
+        # PDF
+        if self.pdf:
+            with open('download-pdf.txt', 'a') as writer:
+                writer.write(str(self.pdf) +'\n')
+                writer.close()
+
+        # EPUB
+        if self.epub:
+            with open('download-csv.txt', 'a') as writer:
+                writer.write(str(self.epub) + '\n')
+                writer.close()
 
 
     def save(self):
@@ -112,5 +131,6 @@ with open(source, mode='r') as file:
 
         print('\n', book)
         book.scrape()
-        book.save()
+        book.writeToFile()
+        # book.save()
         print('\n')
