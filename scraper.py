@@ -13,16 +13,16 @@ elif not os.path.isdir('Books'):
 
 class Book:
     def __init__(self, idx, title, edition, subject, url):
-        self.idx     = idx
-        self.title   = title
+        self.idx = idx
+        self.title = title
         self.edition = edition
-        self.name    = f'{self.title}, {self.edition}'
+        self.name = '%s, %s' % (self.title, self.edition)
         self.subject = self.process(subject)
-        self.url     = url
-        self.epub    = None
+        self.url = url
+        self.epub = None
 
     def __repr__(self):
-        return f'{self.idx}: {self.title}, {self.edition} [{self.subject}]'
+        return '%i: %s, %s [%s]' % (self.idx, self.title, self.edition, self.subject)
 
     def process(self, subject):
         subject = subject.split(';')[0]
@@ -39,15 +39,15 @@ class Book:
 
     def scrape(self):
         if os.path.exists(self.path) and os.path.exists(self.epat):
-            print(f'Info: {self.path} already saved.')
-            print(f'Info: {self.epat} already saved.')
+            print('Info: %s already saved.' % self.path)
+            print('Info: %s already saved.' % self.epat)
             self.save = lambda: 0
 
             return 0
 
         response = requests.get(self.url)
-        html  = lxml.html.fromstring(response.content)
-        epub  = None
+        html = lxml.html.fromstring(response.content)
+        epub = None
 
         try:
             xpath = html.xpath('//*[@id="main-content"]/article[1]/div/div/div[2]/div/div/a')
@@ -59,19 +59,20 @@ class Book:
 
             xpath = xpath[0]
         except IndexError:
-            print(f'Error: {self.idx} {self.name} server access point missing')
+            print('Error: %i %s server access point missing' % (self.idx, self.name))
 
             self.save = lambda: 0
             return False
 
         else:
-            stub  = xpath.get('href')
-            pdf   = f'https://link.springer.com/{stub}'
+            stub = xpath.get('href')
+            pdf = 'https://link.springer.com/%s' % stub
+
             self.pdf  = requests.get(pdf).content
 
             if epub:
                 stub = epub.get('href')
-                epub = f'https://link.springer.com/{stub}'
+                epub = 'https://link.springer.com/%s' % stub
                 self.epub = requests.get(epub).content
 
 
@@ -79,20 +80,20 @@ class Book:
         if self.pdf and not os.path.exists(self.path):
             with open(self.path, 'wb') as fhand:
                 fhand.write(self.pdf)
-            print(f'Saved: {self.path}')
+            print('Saved: %s' % self.path)
         elif not self.pdf:
-            print(f'Info: Springer does not furnish this as pdf.')
+            print('Info: Springer does not furnish this as pdf.')
         else:
-            print(f'Info: {self.path} already saved.')
+            print('Info: %s already saved.' % self.path)
 
         if self.epub and not os.path.exists(self.epat):
             with open(self.epat, 'wb') as fhand:
                 fhand.write(self.epub)
-            print(f'Saved: {self.epat}')
+            print('Saved: %s' % self.epat)
         elif not self.epub:
-            print(f'Info: Springer does not furnish this as epub.')
+            print('Info: Springer does not furnish this as epub.')
         else:
-            print(f'Info: {self.epat} already saved.')
+            print('Info: %s already saved.' % self.epat)
 
 
 source = 'source.csv'
